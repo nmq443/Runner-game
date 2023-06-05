@@ -1,5 +1,6 @@
 # Updated 6/3/2023:
 * Added dodging flies capability
+* Added highest score
 # Runner game
 
 It's a clone from dinosaur runner on Google Chrome which appears when you lose internet connection. The game is written in Python with Pygame, it's the first game project I have ever done.
@@ -7,10 +8,6 @@ It's a clone from dinosaur runner on Google Chrome which appears when you lose i
 ## Features
 
 For now, the main character is only capable of dodging the snails, I will update the dodging flies soon. 
-
-## Upcoming features
-
-Resize full-screen, dodging flies and may be more music.
 
 ## Reference
 

@@ -2,6 +2,7 @@ import pygame
 from sys import exit # to end code whenever you call it
 from random import randint, choice
 
+# Player class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -11,6 +12,7 @@ class Player(pygame.sprite.Sprite):
         first_char_w = player_walk_1.get_width()
         first_char_h = player_walk_1.get_height()
 
+        # default screen's size is 400x800
         self.h_ratio = screen.get_height()/400
         self.w_ratio = screen.get_width()/800
 
@@ -28,29 +30,34 @@ class Player(pygame.sprite.Sprite):
         self.gravity = 0
         self.isShrink = False
 
-        self.jump_sound = pygame.mixer.Sound('main/resources/audio/jump.mp3')
-        self.jump_sound.set_volume(0.5)
+        # self.jump_sound = pygame.mixer.Sound('main/resources/audio/jump.mp3')
+        # self.jump_sound.set_volume(0.5)
 
+    # input key from user
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= (screen.get_height() - ground_surface.get_height()):
-            self.gravity = -20
-            self.jump_sound.play()
+            self.gravity = -screen.get_height()/400 * 20
+            # self.jump_sound.play()
+            # print(self.gravity)
         elif keys[pygame.K_LSHIFT] and self.rect.bottom >= (screen.get_height() - ground_surface.get_height()):
             self.isShrink = True
-            print('shrink')
+            # print('shrink')
 
+    # apply gravity when falling down
     def apply_gravity(self):
         self.gravity += 1
         self.rect.y += self.gravity
         if self.rect.bottom >= (screen.get_height() - ground_surface.get_height()):
             self.rect.bottom = screen.get_height() - ground_surface.get_height()
 
+    # update surface
     def update(self):
         self.player_input()
         self.apply_gravity()
         self.animation_state()
 
+    # animation of the character
     def animation_state(self):
         self.h_ratio = screen.get_height()/400
         self.w_ratio = screen.get_width()/800
@@ -60,7 +67,6 @@ class Player(pygame.sprite.Sprite):
             self.image = pygame.transform.scale_by(self.image, (self.w_ratio, self.h_ratio))
         else:
             if self.isShrink == True:
-                # self.image = self.player_shrink = pygame.transform.scale(self.player_shrink, (self.player_shrink.get_width(), self.player_shrink.get_height()))
                 self.image = self.player_shrink
                 self.image = pygame.transform.scale_by(self.image, (self.w_ratio, self.h_ratio))
                 self.isShrink = False
@@ -76,36 +82,41 @@ class Player(pygame.sprite.Sprite):
                 self.player_first_x = screen.get_width()/10
                 self.player_first_y = screen.get_height()/4*3
                 self.rect = self.image.get_rect(midbottom = (self.player_first_x, self.player_first_y))
-        # print(f"{self.rect.bottom} {self.rect.top} {self.rect.right} {self.rect.left}")
 
+# Obstacle class
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, type):
         super().__init__()
-
         if type == 'fly':
             fly_1 = pygame.image.load('main/resources/graphics/Fly/Fly1.png').convert_alpha()
             fly_2 = pygame.image.load('main/resources/graphics/Fly/Fly2.png').convert_alpha()
+            self.type = 'fly'
             self.frames = [fly_1, fly_2]
-            y_pos = screen.get_height()/5
+            self.Y = screen.get_height()/5*3
         elif type == 'snail':
             snail_1 = pygame.image.load('main/resources/graphics/snail/snail1.png').convert_alpha()
             snail_2 = pygame.image.load('main/resources/graphics/snail/snail2.png').convert_alpha()
+            self.type = 'snail'
             self.frames = [snail_1, snail_2]
-            y_pos = screen.get_height() - ground_surface.get_height()
+            self.Y = screen.get_height()/4*3
 
         self.animation_index = 0
         self.image = self.frames[self.animation_index]
-        self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
+        self.rect = self.image.get_rect(midbottom = (randint(screen.get_width()/10*8, screen.get_width()/10*9), self.Y))
 
     def animation_state(self):
+        self.h_ratio = screen.get_height()/400
+        self.w_ratio = screen.get_width()/800
+
         self.animation_index += 0.1
         if self.animation_index >= len(self.frames):
             self.animation_index = 0
         self.image = self.frames[int(self.animation_index)]
+        self.image = pygame.transform.scale_by(self.image, (self.w_ratio, self.h_ratio))
 
     def update(self):
         self.animation_state()
-        self.rect.x -= 6
+        self.rect.x -= self.w_ratio*6
         self.destroy()
 
     def destroy(self):
@@ -156,10 +167,11 @@ test_font = pygame.font.Font('main/resources/font/Pixeltype.ttf', 50)
 game_active = False 
 start_time = 0
 score = 0
+highest_score = 0
 
-bg_music = pygame.mixer.Sound('main/resources/audio/music.wav')
-bg_music.set_volume(0.2)
-bg_music.play(loops = 6)
+# bg_music = pygame.mixer.Sound('main/resources/audio/music.wav')
+# bg_music.set_volume(0.2)
+# bg_music.play(loops = 6)
 
 # Groups
 player = pygame.sprite.GroupSingle()
@@ -192,7 +204,6 @@ while True:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = pygame.time.get_ticks()
-
     if game_active:
         # screen.blit(sky_surface, (0, 0))
         # sky_rect = sky_surface.get_rect(center = (screen.get_width()/2, screen.get_height()/2))
@@ -203,10 +214,16 @@ while True:
         ground_surface = pygame.transform.scale(ground_surface, (screen.get_width(), screen.get_height()/4))
         screen.blit(ground_surface, (0, sky_surface.get_height()/4*3))
         score = display_score()
+        highest_score = max(score, highest_score)
 
         player.draw(screen)
         player.update()
         
+        highest_score_message = test_font.render(f"Highest score {highest_score}", False, (64, 64, 64))
+        highest_score_message_rect = highest_score_message.get_rect(topright = (screen.get_width(), 0))
+        
+        screen.blit(highest_score_message, highest_score_message_rect)
+
         obstacle_group.draw(screen)
         obstacle_group.update()
 
@@ -221,6 +238,8 @@ while True:
 
         score_message = test_font.render(f"Your score: {score}", False, (111, 196, 169))
         score_message_rect = score_message.get_rect(center = (screen.get_width()/2, screen.get_height()/5*4))
+
+        
 
         if score == 0:
             start_game()
